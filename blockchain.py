@@ -21,6 +21,51 @@ def hash_block(block):
     return "-".join([str(block[key]) for key in block])
 
 
+def get_balance(participant):
+    """ Return coin balance of participant.
+
+        :transaction_sender:
+        A nested list comprehension:
+            For each block (dictionary) in blockchain (list),
+            the open_transactions (dictionary value of block["transactions"])
+            populates transaction_sender (list).
+                For each transaction in open_transactions,
+                the amount (dictionary value of transaction["amount"])
+                populates open_transactions 
+                if the sender (dictionary value of transaction["sender"])
+                is the participant in question.
+    """
+    transaction_sender = [
+        [
+            transaction["amount"]
+            for transaction in block["transactions"]
+            if transaction["sender"] == participant
+        ]
+        for block in blockchain
+    ]
+
+    amount_sent = 0
+    for transaction in transaction_sender:
+        if len(transaction) > 0:
+            amount_sent += transaction[0]
+
+    transaction_recipient = [
+        [
+            transaction["amount"]
+            for transaction in block["transactions"]
+            if transaction["recipient"] == participant
+        ]
+        for block in blockchain
+    ]
+
+    amount_received = 0
+    for transaction in transaction_recipient:
+        if len(transaction) > 0:
+            amount_received += transaction[0]
+
+    return amount_received - amount_sent
+
+
 def get_last_blockchain_value():
     """ Return value of last block in the blockchain.
     """
@@ -55,6 +100,7 @@ def mine_block():
         "transactions": open_transactions,
     }
     blockchain.append(block)
+    return True
 
 
 def input_transaction_value():
@@ -119,7 +165,8 @@ while waiting_for_input:
         print(participants)
     # Mine block
     elif user_choice == "M":
-        mine_block()
+        if mine_block():
+            open_transactions = []
     # Hack blockchain
     elif user_choice == "H":
         if len(blockchain) >= 1:
@@ -141,6 +188,7 @@ while waiting_for_input:
         print("Invalid blockchain!")
         print_blockchain_elements()
         break
+    print(get_balance("Conner"))
 else:
     print("\nUser left!")
 
