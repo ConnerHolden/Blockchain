@@ -1,91 +1,142 @@
-blockchain = []
+# Initial block
+genesis_block = {
+    "previous_hash": "",
+    "index": 0,
+    "transactions": [],
+}
+# List of all blocks
+blockchain = [genesis_block]
+# List of all transactions made (bug) instead of transactions not add to bloackchain
+open_transactions = []
+# Local sender
+owner = "Conner"
+# Set of participants
+participants = {"Conner"}
+
+
+# Hash generator
+def hash_block(block):
+    """ Generate hash.
+    """
+    return "-".join([str(block[key]) for key in block])
 
 
 def get_last_blockchain_value():
+    """ Return value of last block in the blockchain.
+    """
     if not blockchain:
-        # blockchain.append(["initial"])
         return None
     return blockchain[-1]
 
 
-def add_value(transaction_amount, last_transaction):
-    if last_transaction == None:
-        last_transaction = [1]
-    blockchain.append([last_transaction, transaction_amount])
+def add_transaction(recipient, sender=owner, amount=1.0):
+    """ Add transaction (dictionary) to open_transactions (list).
+        Add sender and recipient to participants (set).
+    """
+    transaction = {"recipient": recipient, "sender": sender, "amount": amount}
+    open_transactions.append(transaction)
+    participants.add(sender)
+    participants.add(recipient)
+
+
+def mine_block():
+    """ Add block (dictionary) to blockchain (list).
+    """
+    last_block = blockchain[-1]
+    # hashed_block creates a new list using 'list comprehensions': For each element (key)
+    # in last_block, a new element is generated (the dictionary value last_block[key])
+    # to fill a new list. The hash is generated using "".join(str()) to create a new
+    # string from the list and join it together.
+    hashed_block = hash_block(last_block)
+
+    block = {
+        "previous_hash": hashed_block,
+        "index": len(blockchain),
+        "transactions": open_transactions,
+    }
+    blockchain.append(block)
 
 
 def input_transaction_value():
-    return float(input("\nEnter your transaction amount: "))
+    """ Return transaction input.
+    """
+    transaction_recipient = input("Enter the recipient of the transaction: ")
+    transaction_amount = float(input("\nEnter your transaction amount: "))
+    return (
+        transaction_recipient,
+        transaction_amount,
+    )  # Tuple (do not need parentheses)
 
 
 def input_user_choice():
+    """ Prompt user.
+    """
     user_choice = input("\n>> ").upper()
     return user_choice
 
 
 def print_blockchain_elements():
+    """ Print every block (dictionary) in the blockchain (list).
+    """
     for block in blockchain:
         print(block)
 
 
-# def verify_chain():
-#     is_valid = True
-#     for block_index in range(len(blockchain)):
-#         if block_index == 0:
-#             block_index += 1
-#             continue
-#         elif blockchain[block_index][0] == blockchain[block_index - 1]:
-#             is_valid = True
-#         else:
-#             is_valid = False
-#             break
-#         block_index += 1
-#     return is_valid
-
-
-# def verify_chain():
-#     block_index = 0
-#     is_valid = True
-#     for block in blockchain:
-#         if block_index == 0:
-#             block_index += 1
-#             continue
-#         elif block[0] == blockchain[block_index - 1]:
-#             is_valid = True
-#         else:
-#             is_valid = False
-#             break
-#         block_index += 1
-#     return is_valid
-
-
 def verify_chain():
-    for index, block in enumerate(blockchain):
-        if index >= 1 and block[0] != blockchain[index - 1]:
+    """ Determine if a block's previous_hash is the same as the hash of previous block.
+    """
+    for (index, block) in enumerate(blockchain):
+        if index == 0:
+            continue
+        if block["previous_hash"] != hash_block(blockchain[index - 1]):
             return False
     return True
 
 
+# Determines whether while loop should run
 waiting_for_input = True
 
 while waiting_for_input:
     print("\n(A)dd new transaction.")
     print("(O)utput blockchain.")
+    print("Output (p)articipants.")
+    print("(M)ine new block.")
     print("(H)ack.")
     print("(Q)uit.")
     user_choice = input_user_choice()
+
+    # Add transaction
     if user_choice == "A":
-        transaction_amount = input_transaction_value()
-        add_value(transaction_amount, get_last_blockchain_value())
+        transaction_data = input_transaction_value()
+        (recipient, amount) = transaction_data  # Access tuple
+        add_transaction(recipient, amount=amount)
+        print(open_transactions)
+    # Output blockchain
     elif user_choice == "O":
         print_blockchain_elements()
+    # Output participants
+    elif user_choice == "P":
+        print(participants)
+    # Mine block
+    elif user_choice == "M":
+        mine_block()
+    # Hack blockchain
     elif user_choice == "H":
         if len(blockchain) >= 1:
-            blockchain[0] = [2]
+            blockchain[0] = {
+                "previous_hash": "",
+                "index": 0,
+                "transactions": [
+                    {"sender": "Chris", "recipient": "Conner", "amount": 100.0}
+                ],
+            }
+    # Quit
     elif user_choice == "Q":
         waiting_for_input = False
+    # Invalid entry
     else:
-        print("\nInvalid choice.")
+        print("\nInvalid entry.")
+    # Verify
     if not verify_chain():
         print("Invalid blockchain!")
         print_blockchain_elements()
