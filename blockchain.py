@@ -125,6 +125,7 @@ def print_blockchain_elements():
     """ Print every block (dictionary) in the blockchain (list).
     """
     for block in blockchain:
+        print(f"\nPrinting block {block['index']} ...")
         print(block)
 
 
