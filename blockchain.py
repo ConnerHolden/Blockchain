@@ -1,5 +1,5 @@
+# Mining reward
 mining_reward = 10
-
 # Initial block
 genesis_block = {
     "previous_hash": "",
@@ -46,6 +46,17 @@ def get_balance(participant):
         for block in blockchain
     ]
 
+    # Since get_balance() calculates sender/recipient balances from blockchain, the
+    # balance of the sender must be updated from open_transactions as well so that the
+    # sender isn't allowed to send more than they have before the next block is added.
+    open_transaction_sender = [
+        transaction["amount"]
+        for transaction in open_transactions
+        if transaction["sender"] == participant
+    ]
+
+    transaction_sender.append(open_transaction_sender)
+
     amount_sent = 0
     for transaction in transaction_sender:
         if len(transaction) > 0:
@@ -85,7 +96,14 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     """ Add transaction (dictionary) to open_transactions (list).
         Add sender and recipient to participants (set).
     """
-    transaction = {"recipient": recipient, "sender": sender, "amount": amount}
+
+    # Transaction
+    transaction = {
+        "recipient": recipient,
+        "sender": sender,
+        "amount": amount,
+    }
+
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         participants.add(sender)
@@ -104,6 +122,7 @@ def mine_block():
     # string from the list and join it together.
     hashed_block = hash_block(last_block)
 
+    # Reward transaction
     reward_transaction = {
         "sender": "mining",
         "recipient": owner,
@@ -112,6 +131,7 @@ def mine_block():
 
     open_transactions.append(reward_transaction)
 
+    # Block
     block = {
         "previous_hash": hashed_block,
         "index": len(blockchain),
@@ -176,7 +196,10 @@ while waiting_for_input:
     if user_choice == "A":
         transaction_data = input_transaction_value()
         (recipient, amount) = transaction_data  # Access tuple
-        add_transaction(recipient, amount=amount)
+        if add_transaction(recipient, amount=amount):
+            print("\nAdded transaction!")
+        else:
+            print("\nTransaction failed!")
         print(open_transactions)
     # Output blockchain
     elif user_choice == "B":
