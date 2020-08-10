@@ -1,3 +1,5 @@
+mining_reward = 10
+
 # Initial block
 genesis_block = {
     "previous_hash": "",
@@ -74,14 +76,22 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
+def verify_transaction(transaction):
+    sender_balance = get_balance(transaction["sender"])
+    return sender_balance >= transaction["amount"]
+
+
 def add_transaction(recipient, sender=owner, amount=1.0):
     """ Add transaction (dictionary) to open_transactions (list).
         Add sender and recipient to participants (set).
     """
     transaction = {"recipient": recipient, "sender": sender, "amount": amount}
-    open_transactions.append(transaction)
-    participants.add(sender)
-    participants.add(recipient)
+    if verify_transaction(transaction):
+        open_transactions.append(transaction)
+        participants.add(sender)
+        participants.add(recipient)
+        return True
+    return False
 
 
 def mine_block():
@@ -93,6 +103,14 @@ def mine_block():
     # to fill a new list. The hash is generated using "".join(str()) to create a new
     # string from the list and join it together.
     hashed_block = hash_block(last_block)
+
+    reward_transaction = {
+        "sender": "mining",
+        "recipient": owner,
+        "amount": mining_reward,
+    }
+
+    open_transactions.append(reward_transaction)
 
     block = {
         "previous_hash": hashed_block,
@@ -144,12 +162,14 @@ def verify_chain():
 waiting_for_input = True
 
 while waiting_for_input:
-    print("\n(A)dd new transaction.")
-    print("(O)utput blockchain.")
-    print("Output (p)articipants.")
-    print("(M)ine new block.")
-    print("(H)ack.")
-    print("(Q)uit.")
+    print("\n(A)dd new transaction")
+    print("(B)lockchain")
+    print("(O)pen transactions")
+    print("(C)oin balance")
+    print("(P)articipants")
+    print("(M)ine new block")
+    print("(H)ack")
+    print("(Q)uit")
     user_choice = input_user_choice()
 
     # Add transaction
@@ -159,8 +179,15 @@ while waiting_for_input:
         add_transaction(recipient, amount=amount)
         print(open_transactions)
     # Output blockchain
-    elif user_choice == "O":
+    elif user_choice == "B":
         print_blockchain_elements()
+    # Output open transactions
+    elif user_choice == "O":
+        print(open_transactions)
+    # Output balance
+    elif user_choice == "C":
+        print("\nPrinting balance ...")
+        print(get_balance("Conner"))
     # Output participants
     elif user_choice == "P":
         print(participants)
@@ -189,7 +216,6 @@ while waiting_for_input:
         print("Invalid blockchain!")
         print_blockchain_elements()
         break
-    print(get_balance("Conner"))
 else:
     print("\nUser left!")
 
