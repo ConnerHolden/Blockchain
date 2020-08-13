@@ -207,8 +207,11 @@ def verify_chain():
     return True
 
 
-def validate_transactions():
-    return all([verify_transaction(transaction) for transaction in open_transactions])
+# The following is broken because verify_transaction() relies on get_balance() which in
+# turn can only report current balances (as opposed to past balances, which is what this
+# function would require).
+# def validate_open_transactions():
+#     return all([verify_transaction(transaction) for transaction in open_transactions])
 
 
 # Determines whether while loop should run
@@ -221,7 +224,6 @@ while waiting_for_input:
     print("(C)oin balance")
     print("(P)articipants")
     print("(M)ine new block")
-    print("(V)alidate transactions")
     print("(H)ack")
     print("(Q)uit")
     user_choice = input_user_choice()
@@ -255,12 +257,6 @@ while waiting_for_input:
     elif user_choice == "M":
         if mine_block():
             open_transactions = []
-    # Validate transactions
-    elif user_choice == "V":
-        if validate_transactions():
-            print("\nAll transactions are valid.")
-        else:
-            print("\nThere are invalid transactions.")
     # Hack blockchain
     elif user_choice == "H":
         if len(blockchain) >= 1:
