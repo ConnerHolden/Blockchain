@@ -1,3 +1,5 @@
+from functools import reduce
+
 # Mining reward
 mining_reward = 10
 # Initial block
@@ -57,10 +59,19 @@ def get_balance(participant):
 
     transaction_sender.append(open_transaction_sender)
 
+    # amount_sent = reduce(
+    #     lambda transaction_sum, transaction_amount: transaction_sum
+    #     + transaction_amount[0]
+    #     if len(transaction_amount) > 0
+    #     else 0,
+    #     transaction_sender,
+    #     0,
+    # )
     amount_sent = 0
-    for transaction in transaction_sender:
-        if len(transaction) > 0:
-            amount_sent += transaction[0]
+    for block in transaction_sender:
+        for transaction in block:
+            if transaction > 0:
+                amount_sent += transaction
 
     transaction_recipient = [
         [
@@ -71,10 +82,19 @@ def get_balance(participant):
         for block in blockchain
     ]
 
+    # amount_received = reduce(
+    #     lambda transaction_sum, transaction_amount: transaction_sum
+    #     + transaction_amount[0]
+    #     if len(transaction_amount) > 0
+    #     else 0,
+    #     transaction_recipient,
+    #     0,
+    # )
     amount_received = 0
-    for transaction in transaction_recipient:
-        if len(transaction) > 0:
-            amount_received += transaction[0]
+    for block in transaction_recipient:
+        for transaction in block:
+            if transaction > 0:
+                amount_received += transaction
 
     return amount_received - amount_sent
 
@@ -129,13 +149,22 @@ def mine_block():
         "amount": mining_reward,
     }
 
-    open_transactions.append(reward_transaction)
+    # The reward for mining is added before a block is successfully incorporated into the
+    # blockchain
+
+    # A separate copy of the *values* in a preexisting list are not copied in variable
+    # assignment, e.g. copied_transactions = open_transactions, but rather a mirror image
+    # of the *references* is created. This means that changes to one affect the other.
+    # In order to create a separate copy of a list's values, a range must be specified in
+    # the original, e.g. copied_transactions = open_transactions[:].
+    copied_transactions = open_transactions[:]
+    copied_transactions.append(reward_transaction)
 
     # Block
     block = {
         "previous_hash": hashed_block,
         "index": len(blockchain),
-        "transactions": open_transactions,
+        "transactions": copied_transactions,
     }
     blockchain.append(block)
     return True
@@ -178,6 +207,10 @@ def verify_chain():
     return True
 
 
+def validate_transactions():
+    return all([verify_transaction(transaction) for transaction in open_transactions])
+
+
 # Determines whether while loop should run
 waiting_for_input = True
 
@@ -188,6 +221,7 @@ while waiting_for_input:
     print("(C)oin balance")
     print("(P)articipants")
     print("(M)ine new block")
+    print("(V)alidate transactions")
     print("(H)ack")
     print("(Q)uit")
     user_choice = input_user_choice()
@@ -195,22 +229,25 @@ while waiting_for_input:
     # Add transaction
     if user_choice == "A":
         transaction_data = input_transaction_value()
+        # The tuple of values returned by input_transaction_value() is assigned to
+        # transaction_data. These values are then assigned to a tuple of variables that
+        # can be used by add_transaction()
         (recipient, amount) = transaction_data  # Access tuple
         if add_transaction(recipient, amount=amount):
             print("\nAdded transaction!")
         else:
             print("\nTransaction failed!")
-        print(open_transactions)
+        print(f"Open transacitons: {open_transactions}")
     # Output blockchain
     elif user_choice == "B":
         print_blockchain_elements()
     # Output open transactions
     elif user_choice == "O":
-        print(open_transactions)
+        print(f"\nOpen transacitons: {open_transactions}")
     # Output balance
     elif user_choice == "C":
         print("\nPrinting balance ...")
-        print(get_balance("Conner"))
+        print("Balance of {}: {:->10.2f}".format("Conner", get_balance("Conner")))
     # Output participants
     elif user_choice == "P":
         print(participants)
@@ -218,6 +255,12 @@ while waiting_for_input:
     elif user_choice == "M":
         if mine_block():
             open_transactions = []
+    # Validate transactions
+    elif user_choice == "V":
+        if validate_transactions():
+            print("\nAll transactions are valid.")
+        else:
+            print("\nThere are invalid transactions.")
     # Hack blockchain
     elif user_choice == "H":
         if len(blockchain) >= 1:
