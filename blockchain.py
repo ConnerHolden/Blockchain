@@ -1,4 +1,7 @@
 from functools import reduce
+import hashlib
+import json
+
 
 # Mining reward
 mining_reward = 10
@@ -22,7 +25,10 @@ participants = {"Conner"}
 def hash_block(block):
     """ Generate hash.
     """
-    return "-".join([str(block[key]) for key in block])
+    # Create a string from <block> (dict) and encode it in UTF-8. Then generate a byte
+    # hash using the sha256 algorithm from hashlib. Convert the byte hash into a string
+    # with hexdigest().
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 
 def get_balance(participant):
