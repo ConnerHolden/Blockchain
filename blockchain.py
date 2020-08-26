@@ -1,7 +1,7 @@
 from functools import reduce
 import hashlib
 import json
-
+from collections import OrderedDict
 
 # Mining reward
 mining_reward = 10
@@ -29,7 +29,7 @@ def hash_block(block):
     # Create a string from <block> (dict) and encode it in UTF-8. Then generate a byte
     # hash using the sha256 algorithm from hashlib. Convert the byte hash into a string
     # with hexdigest().
-    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -140,12 +140,17 @@ def add_transaction(recipient, sender=owner, amount=1.0):
         Add sender and recipient to participants (set).
     """
 
-    # Transaction
-    transaction = {
-        "recipient": recipient,
-        "sender": sender,
-        "amount": amount,
-    }
+    # transaction = {
+    #     "recipient": recipient,
+    #     "sender": sender,
+    #     "amount": amount,
+    # }
+
+    # Replace old transaction (dict) with an ordered dictionary so that hash generation
+    # is reliable.
+    transaction = OrderedDict(
+        [("sender", sender), ("recipient", recipient), ("amount", amount)]
+    )
 
     if verify_transaction(transaction):
         open_transactions.append(transaction)
@@ -166,12 +171,15 @@ def mine_block():
     hashed_block = hash_block(last_block)
     proof = proof_of_work()
 
-    # Reward transaction
-    reward_transaction = {
-        "sender": "mining",
-        "recipient": owner,
-        "amount": mining_reward,
-    }
+    # reward_transaction = {
+    #     "sender": "mining",
+    #     "recipient": owner,
+    #     "amount": mining_reward,
+    # }
+
+    reward_transaction = OrderedDict(
+        [("sender", "mining"), ("recipient", owner), ("amount", mining_reward)]
+    )
 
     # The reward for mining is added before a block is successfully incorporated into the
     # blockchain
@@ -219,7 +227,7 @@ def print_blockchain_elements():
     for block in blockchain:
         print(f"\nPrinting block {block['index']} ...")
         print(f"Index: {block['index']}")
-        print(f"Hash: {block['previous_hash']}")
+        print(f"Hash:  {block['previous_hash']}")
         print(f"Proof: {block['proof']}")
         for transaction in block["transactions"]:
             print(
