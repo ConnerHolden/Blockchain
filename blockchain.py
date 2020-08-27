@@ -1,10 +1,11 @@
-from functools import reduce
-import hashlib
-import json
+# from functools import reduce
 from collections import OrderedDict
+
+from hash_util import hash_string_256, hash_block
 
 # Mining reward
 mining_reward = 10
+
 # Initial block
 genesis_block = {
     "previous_hash": "",
@@ -12,29 +13,23 @@ genesis_block = {
     "transactions": [],
     "proof": 100,
 }
+
 # List of all blocks
 blockchain = [genesis_block]
+
 # List of all transactions made (bug) instead of transactions not add to bloackchain
 open_transactions = []
+
 # Local sender
 owner = "Conner"
+
 # Set of participants
 participants = {"Conner"}
 
 
-# Hash generator
-def hash_block(block):
-    """ Generate hash.
-    """
-    # Create a string from <block> (dict) and encode it in UTF-8. Then generate a byte
-    # hash using the sha256 algorithm from hashlib. Convert the byte hash into a string
-    # with hexdigest().
-    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
-
-
 def valid_proof(transactions, last_hash, proof):
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    guess_hash = hashlib.sha256(guess).hexdigest()
+    guess_hash = hash_string_256(guess)
     print(guess_hash)
     return guess_hash[0:2] == "00"
 
