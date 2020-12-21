@@ -2,8 +2,6 @@
 from collections import OrderedDict
 import json
 
-# Test
-
 # json alternative is pickle
 import pickle
 
