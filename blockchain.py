@@ -2,9 +2,6 @@
 from collections import OrderedDict
 import json
 
-# json alternative is pickle
-import pickle
-
 from hash_util import hash_string_256, hash_block
 
 # Mining reward
@@ -21,7 +18,8 @@ genesis_block = {
 # List of all blocks
 blockchain = [genesis_block]
 
-# List of all transactions made (bug) instead of transactions not add to bloackchain
+# List of all transactions made (bug) instead of transactions not add to
+# blockchain.
 open_transactions = []
 
 # Local sender
@@ -41,9 +39,9 @@ def load_data():
         # open_transactions = file_content["open_transactions"]
         blockchain = json.loads(file_content[0][:-1])
 
-        # save_data() changes the format of <transactions> (OrderedDict) such that the
-        # use of load_data() produces an invalid blockchain hash. Therefore, loading it
-        # requires that it be redefined.
+        # save_data() changes the format of <transactions> (OrderedDict) such
+        # that the use of load_data() produces an invalid blockchain hash.
+        # Therefore, loading it requires that it be redefined.
 
         updated_blockchain = []
         for block in blockchain:
@@ -66,9 +64,9 @@ def load_data():
         blockchain = updated_blockchain
         open_transactions = json.loads(file_content[1])
 
-        # save_data() changes the format of <transaction> (OrderedDict) such that the
-        # use of load_data() produces an invalid blockchain hash. Therefore, loading it
-        # requires that it be redefined.
+        # save_data() changes the format of <transaction> (OrderedDict) such
+        # that the use of load_data() produces an invalid blockchain hash.
+        # Therefore, loading it requires that it be redefined.
 
         updated_transactions = []
         for transaction in open_transactions:
@@ -101,7 +99,7 @@ def save_data():
 def valid_proof(transactions, last_hash, proof):
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
     guess_hash = hash_string_256(guess)
-    print(guess_hash)
+    # print(guess_hash)
     return guess_hash[0:2] == "00"
 
 
@@ -124,7 +122,7 @@ def get_balance(participant):
             populates transaction_sender (list).
                 For each transaction in open_transactions,
                 the amount (dictionary value of transaction["amount"])
-                populates open_transactions 
+                populates open_transactions
                 if the sender (dictionary value of transaction["sender"])
                 is the participant in question.
     """
@@ -137,9 +135,10 @@ def get_balance(participant):
         for block in blockchain
     ]
 
-    # Since get_balance() calculates sender/recipient balances from blockchain, the
-    # balance of the sender must be updated from open_transactions as well so that the
-    # sender isn't allowed to send more than they have before the next block is added.
+    # Since get_balance() calculates sender/recipient balances from blockchain,
+    # the balance of the sender must be updated from open_transactions as well
+    # so that the sender isn't allowed to send more than they have before the
+    # next block is added.
     open_transaction_sender = [
         transaction["amount"]
         for transaction in open_transactions
@@ -212,8 +211,8 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     #     "amount": amount,
     # }
 
-    # Replace old transaction (dict) with an ordered dictionary so that hash generation
-    # is reliable.
+    # Replace old transaction (dict) with an ordered dictionary so that hash
+    # generation is reliable.
     transaction = OrderedDict(
         [("sender", sender), ("recipient", recipient), ("amount", amount)]
     )
@@ -231,10 +230,10 @@ def mine_block():
     """ Add block (dictionary) to blockchain (list).
     """
     last_block = blockchain[-1]
-    # hashed_block creates a new list using 'list comprehensions': For each element (key)
-    # in last_block, a new element is generated (the dictionary value last_block[key])
-    # to fill a new list. The hash is generated using "".join(str()) to create a new
-    # string from the list and join it together.
+    # hashed_block creates a new list using 'list comprehensions': For each
+    # element (key) in last_block, a new element is generated (the dictionary
+    # value last_block[key]) to fill a new list. The hash is generated using
+    # "".join(str()) to create a new string from the list and join it together.
     hashed_block = hash_block(last_block)
     proof = proof_of_work()
 
@@ -248,14 +247,15 @@ def mine_block():
         [("sender", "mining"), ("recipient", owner), ("amount", mining_reward)]
     )
 
-    # The reward for mining is added before a block is successfully incorporated into the
-    # blockchain
+    # The reward for mining is added before a block is successfully
+    # incorporated into the blockchain
 
-    # A separate copy of the *values* in a preexisting list are not copied in variable
-    # assignment, e.g. copied_transactions = open_transactions, but rather a mirror image
-    # of the *references* is created. This means that changes to one affect the other.
-    # In order to create a separate copy of a list's values, a range must be specified in
-    # the original, e.g. copied_transactions = open_transactions[:].
+    # A separate copy of the *values* in a preexisting list are not copied in
+    # variable assignment, e.g. copied_transactions = open_transactions, but
+    # rather a mirror image of the *references* is created. This means that
+    # changes to one affect the other. In order to create a separate copy of a
+    # list's values, a range must be specified in the original, e.g.
+    # copied_transactions = open_transactions[:].
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
 
@@ -298,12 +298,14 @@ def print_blockchain_elements():
         print(f"Proof: {block['proof']}")
         for transaction in block["transactions"]:
             print(
-                f"    {transaction['sender']} ({transaction['amount']})-> {transaction['recipient']}"
+                f"{transaction['sender']} ({transaction['amount']})-> "
+                f"{transaction['recipient']}"
             )
 
 
 def verify_chain():
-    """ Determine if a block's previous_hash is the same as the hash of previous block.
+    """ Determine if a block's previous_hash is the same as the hash of
+        previous block.
     """
     for (index, block) in enumerate(blockchain):
         if index == 0:
@@ -318,11 +320,13 @@ def verify_chain():
     return True
 
 
-# The following is broken because verify_transaction() relies on get_balance() which in
-# turn can only report current balances (as opposed to past balances, which is what this
-# function would require).
+# The following is broken because verify_transaction() relies on get_balance()
+# which in turn can only report current balances (as opposed to past balances,
+# which is what this function would require).
 # def validate_open_transactions():
-#     return all([verify_transaction(transaction) for transaction in open_transactions])
+#     return all(
+# [verify_transaction(transaction) for transaction in open_transactions]
+# )
 
 
 # Determines whether while loop should run
@@ -342,15 +346,15 @@ while waiting_for_input:
     # Add transaction
     if user_choice == "A":
         transaction_data = input_transaction_value()
-        # The tuple of values returned by input_transaction_value() is assigned to
-        # transaction_data. These values are then assigned to a tuple of variables that
-        # can be used by add_transaction()
+        # The tuple of values returned by input_transaction_value() is assigned
+        # to transaction_data. These values are then assigned to a tuple of
+        # variables that can be used by add_transaction()
         (recipient, amount) = transaction_data  # Access tuple
         if add_transaction(recipient, amount=amount):
             print("\nAdded transaction!")
         else:
             print("\nTransaction failed!")
-        print(f"Open transacitons: {open_transactions}")
+        print(f"Open transactions: {open_transactions}")
     # Output blockchain
     elif user_choice == "B":
         print_blockchain_elements()
@@ -360,7 +364,9 @@ while waiting_for_input:
     # Output balance
     elif user_choice == "C":
         print("\nPrinting balance ...")
-        print("Balance of {}: {:->10.2f}".format("Conner", get_balance("Conner")))
+        print(
+            "Balance of {}: {:->10.2f}".format("Conner", get_balance("Conner"))
+            )
     # Output participants
     elif user_choice == "P":
         print(participants)
