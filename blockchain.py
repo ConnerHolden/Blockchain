@@ -31,12 +31,9 @@ participants = {"Conner"}
 
 def load_data():
     with open("blockchain.txt", mode="r") as file:
-        # file_content = pickle.loads(file.read())
         file_content = file.readlines()
         global blockchain
         global open_transactions
-        # blockchain = file_content["chain"]
-        # open_transactions = file_content["open_transactions"]
         blockchain = json.loads(file_content[0][:-1])
 
         # save_data() changes the format of <transactions> (OrderedDict) such
@@ -89,11 +86,6 @@ def save_data():
         file.write(json.dumps(blockchain))
         file.write("\n")
         file.write(json.dumps(open_transactions))
-        # save_data = {
-        #     "chain": blockchain,
-        #     "open_transactions": open_transactions,
-        # }
-        # file.write(pickle.dumps(save_data))
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -364,9 +356,7 @@ while waiting_for_input:
     # Output balance
     elif user_choice == "C":
         print("\nPrinting balance ...")
-        print(
-            "Balance of {}: {:->10.2f}".format("Conner", get_balance("Conner"))
-            )
+        print("Balance of {}: {:->10.2f}".format("Conner", get_balance("Conner")))
     # Output participants
     elif user_choice == "P":
         print(participants)
