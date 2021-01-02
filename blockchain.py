@@ -30,52 +30,55 @@ participants = {"Conner"}
 
 
 def load_data():
-    with open("blockchain.txt", mode="r") as file:
-        file_content = file.readlines()
-        global blockchain
-        global open_transactions
-        blockchain = json.loads(file_content[0][:-1])
+    try:
+        with open("blockchain.txt", mode="r") as file:
+            file_content = file.readlines()
+            global blockchain
+            global open_transactions
+            blockchain = json.loads(file_content[0][:-1])
 
-        # save_data() changes the format of <transactions> (OrderedDict) such
-        # that the use of load_data() produces an invalid blockchain hash.
-        # Therefore, loading it requires that it be redefined.
+            # save_data() changes the format of <transactions> (OrderedDict) such
+            # that the use of load_data() produces an invalid blockchain hash.
+            # Therefore, loading it requires that it be redefined.
 
-        updated_blockchain = []
-        for block in blockchain:
-            updated_block = {
-                "previous_hash": block["previous_hash"],
-                "index": block["index"],
-                "proof": block["proof"],
-                "transactions": [
-                    OrderedDict(
-                        [
-                            ("sender", transaction["sender"]),
-                            ("recipient", transaction["recipient"]),
-                            ("amount", transaction["amount"]),
-                        ]
-                    )
-                    for transaction in block["transactions"]
-                ],
-            }
-            updated_blockchain.append(updated_block)
-        blockchain = updated_blockchain
-        open_transactions = json.loads(file_content[1])
+            updated_blockchain = []
+            for block in blockchain:
+                updated_block = {
+                    "previous_hash": block["previous_hash"],
+                    "index": block["index"],
+                    "proof": block["proof"],
+                    "transactions": [
+                        OrderedDict(
+                            [
+                                ("sender", transaction["sender"]),
+                                ("recipient", transaction["recipient"]),
+                                ("amount", transaction["amount"]),
+                            ]
+                        )
+                        for transaction in block["transactions"]
+                    ],
+                }
+                updated_blockchain.append(updated_block)
+            blockchain = updated_blockchain
+            open_transactions = json.loads(file_content[1])
 
-        # save_data() changes the format of <transaction> (OrderedDict) such
-        # that the use of load_data() produces an invalid blockchain hash.
-        # Therefore, loading it requires that it be redefined.
+            # save_data() changes the format of <transaction> (OrderedDict) such
+            # that the use of load_data() produces an invalid blockchain hash.
+            # Therefore, loading it requires that it be redefined.
 
-        updated_transactions = []
-        for transaction in open_transactions:
-            updated_transaction = OrderedDict(
-                [
-                    ("sender", transaction["sender"]),
-                    ("recipient", transaction["recipient"]),
-                    ("amount", transaction["amount"]),
-                ]
-            )
-            updated_transactions.append(updated_transaction)
-        open_transactions = updated_transactions
+            updated_transactions = []
+            for transaction in open_transactions:
+                updated_transaction = OrderedDict(
+                    [
+                        ("sender", transaction["sender"]),
+                        ("recipient", transaction["recipient"]),
+                        ("amount", transaction["amount"]),
+                    ]
+                )
+                updated_transactions.append(updated_transaction)
+            open_transactions = updated_transactions
+    except IOError:
+        print("File not found!")
 
 
 load_data()
