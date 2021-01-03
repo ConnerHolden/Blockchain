@@ -7,16 +7,8 @@ from hash_util import hash_string_256, hash_block
 # Mining reward
 mining_reward = 10
 
-# Initial block
-genesis_block = {
-    "previous_hash": "",
-    "index": 0,
-    "transactions": [],
-    "proof": 100,
-}
-
 # List of all blocks
-blockchain = [genesis_block]
+blockchain = []
 
 # List of all transactions made (bug) instead of transactions not add to
 # blockchain.
@@ -30,6 +22,8 @@ participants = {"Conner"}
 
 
 def load_data():
+    global blockchain
+    global open_transactions
     try:
         with open("blockchain.txt", mode="r") as file:
             file_content = file.readlines()
@@ -77,18 +71,32 @@ def load_data():
                 )
                 updated_transactions.append(updated_transaction)
             open_transactions = updated_transactions
-    except IOError:
-        print("File not found!")
+    except (IOError, IndexError):
+        # Initial block
+        genesis_block = {
+            "previous_hash": "",
+            "index": 0,
+            "transactions": [],
+            "proof": 100,
+        }
+        # List of all blocks
+        blockchain = [genesis_block]
+        # List of all transactions made (bug) instead of transactions not add to
+        # blockchain.
+        open_transactions = []
 
 
 load_data()
 
 
 def save_data():
-    with open("blockchain.txt", mode="w") as file:
-        file.write(json.dumps(blockchain))
-        file.write("\n")
-        file.write(json.dumps(open_transactions))
+    try:
+        with open("blockchain.txt", mode="w") as file:
+            file.write(json.dumps(blockchain))
+            file.write("\n")
+            file.write(json.dumps(open_transactions))
+    except IOError:
+        print("Saving failed!")
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -108,18 +116,19 @@ def proof_of_work():
 
 
 def get_balance(participant):
-    """ Return coin balance of participant.
+    """
+    Return coin balance of participant.
 
-        :transaction_sender:
-        A nested list comprehension:
-            For each block (dictionary) in blockchain (list),
-            the open_transactions (dictionary value of block["transactions"])
-            populates transaction_sender (list).
-                For each transaction in open_transactions,
-                the amount (dictionary value of transaction["amount"])
-                populates open_transactions
-                if the sender (dictionary value of transaction["sender"])
-                is the participant in question.
+    :transaction_sender:
+    A nested list comprehension:
+        For each block (dictionary) in blockchain (list),
+        the open_transactions (dictionary value of block["transactions"])
+        populates transaction_sender (list).
+            For each transaction in open_transactions,
+            the amount (dictionary value of transaction["amount"])
+            populates open_transactions
+            if the sender (dictionary value of transaction["sender"])
+            is the participant in question.
     """
     transaction_sender = [
         [
@@ -130,10 +139,10 @@ def get_balance(participant):
         for block in blockchain
     ]
 
-    # Since get_balance() calculates sender/recipient balances from blockchain,
-    # the balance of the sender must be updated from open_transactions as well
-    # so that the sender isn't allowed to send more than they have before the
-    # next block is added.
+    # Since get_balance() calculates sender/recipient balances from blockchain, the
+    # balance of the sender must be updated from open_transactions as well so that the
+    # sender isn't allowed to send more than they have before the next block is added.
+
     open_transaction_sender = [
         transaction["amount"]
         for transaction in open_transactions
@@ -183,8 +192,7 @@ def get_balance(participant):
 
 
 def get_last_blockchain_value():
-    """ Return value of last block in the blockchain.
-    """
+    """Return value of last block in the blockchain."""
     if not blockchain:
         return None
     return blockchain[-1]
@@ -196,8 +204,9 @@ def verify_transaction(transaction):
 
 
 def add_transaction(recipient, sender=owner, amount=1.0):
-    """ Add transaction (dictionary) to open_transactions (list).
-        Add sender and recipient to participants (set).
+    """
+    Add transaction (dictionary) to open_transactions (list).
+    Add sender and recipient to participants (set).
     """
 
     # transaction = {
@@ -222,8 +231,7 @@ def add_transaction(recipient, sender=owner, amount=1.0):
 
 
 def mine_block():
-    """ Add block (dictionary) to blockchain (list).
-    """
+    """Add block (dictionary) to blockchain (list)."""
     last_block = blockchain[-1]
     # hashed_block creates a new list using 'list comprehensions': For each
     # element (key) in last_block, a new element is generated (the dictionary
@@ -266,8 +274,7 @@ def mine_block():
 
 
 def input_transaction_value():
-    """ Return transaction input.
-    """
+    """Return transaction input."""
     transaction_recipient = input("Enter the recipient of the transaction: ")
     transaction_amount = float(input("\nEnter your transaction amount: "))
     return (
@@ -277,15 +284,13 @@ def input_transaction_value():
 
 
 def input_user_choice():
-    """ Prompt user.
-    """
+    """Prompt user."""
     user_choice = input("\n>> ").upper()
     return user_choice
 
 
 def print_blockchain_elements():
-    """ Print every block (dictionary) in the blockchain (list).
-    """
+    """Print every block (dictionary) in the blockchain (list)."""
     for block in blockchain:
         print(f"\nPrinting block {block['index']} ...")
         print(f"Index: {block['index']}")
@@ -299,9 +304,7 @@ def print_blockchain_elements():
 
 
 def verify_chain():
-    """ Determine if a block's previous_hash is the same as the hash of
-        previous block.
-    """
+    """Compare block's previous_hash to hash of previous block."""
     for (index, block) in enumerate(blockchain):
         if index == 0:
             continue
